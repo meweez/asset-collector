@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export GITHUB_TOKEN=
+export GITHUB_TOKEN=<Your github token>
 # Check for requirements
 #=======================================================================
 if ! type "go" > /dev/null; then
@@ -68,19 +68,19 @@ read domain
 
 # Create output directory if it doesn't exist
 if [ ! -d "$domain" ]; then
-    mkdir $domain
+    mkdir results/$domain
 fi
 
 # Run subfinder and save results to file
 #=======================================================================
 echo "Running subfinder..."
-subfinder -d $domain -all -o $domain/subfinder.txt
+subfinder -d $domain -all -o results/$domain/subfinder.txt
 #=======================================================================
 
 # Run assetfinder and save results to file
 #=======================================================================
 echo "Running assetfinder..."
-assetfinder --subs-only $domain > $domain/assetfinder.txt
+assetfinder --subs-only $domain > results/$domain/assetfinder.txt
 #=======================================================================
 
 #Certificate Search on Domain
@@ -88,30 +88,31 @@ assetfinder --subs-only $domain > $domain/assetfinder.txt
 cert=$(echo | openssl s_client -showcerts -servername $domain -connect $domain:443 2>/dev/null | openssl x509 -inform pem -noout -text)
 san=$(echo "$cert" | grep -A1 "X509v3 Subject Alternative Name:" | tail -n1)
 san_urls=$(echo "$san" | grep -o "DNS:[^,]*" | sed 's/DNS://g' | xargs -n1 | sed 's/^\s*//' | sed 's/\s*$//')
-echo $san_urls | tee -a $domain/subdomain_certificate.txt
+echo $san_urls | tee -a results/$domain/subdomain_certificate.txt
 #=======================================================================
 
 #crt.sh on Domain
 #=======================================================================
-curl -s "https://crt.sh/?q=$domain&output=json" | tr '\0' '\n' | jq -r ".[].common_name,.[].name_value" | sort -u | uniq | tee -a $domain/crtsh.txt
+curl -s "https://crt.sh/?q=$domain&output=json" | tr '\0' '\n' | jq -r ".[].common_name,.[].name_value" | sort -u | uniq | tee -a results/$domain/crtsh.txt
 #=======================================================================
 
 #Subdomain enumeration in Github
 #=======================================================================
-github-subdomains -d $domain -e -o $domain/github.txt
+github-subdomains -d $domain -e -o results/$domain/github.txt
 #=======================================================================
 
 #Subdomain enumeration using AbuseDB
 #=======================================================================
-curl -s "https://www.abuseipdb.com/whois/$domain" -H "user-agent: Chrome" | grep -E '<li>\w.*</li>' | sed -E 's/<\/?li>//g' | sed -e 's/$/."$domain"/' | tee -a $domain/abusedb.txt
+curl -s "https://www.abuseipdb.com/whois/$domain" -H "user-agent: Chrome" | grep -E '<li>\w.*</li>' | sed -E 's/<\/?li>//g' | sed -e 's/$/."$domain"/' | tee -a results/$domain/abusedb.txt
 #=======================================================================
 
 # Combine all results and remove duplicates
 #=======================================================================
 echo "Combining results and removing duplicates..."
-cat $domain/*.txt | sort -u > $domain/all_subs.txt
+cat results/$domain/*.txt | sort -u > results/$domain/all_subs.txt
 
-echo "Subdomain enumeration complete! Results saved to $domain/all_subs.txt"
+rm results/$domain/abusedb.txt results/$domain/github.txt results/$domain/crtsh.txt results/$domain/subdomain_certificate.txt results/$domain/assetfinder.txt results/$domain/subfinder.txt 
+echo "Subdomain enumeration complete! Results saved to results/$domain/all_subs.txt"
 #=======================================================================
 
 #Get PTR and TXT records of subdomains
@@ -121,29 +122,29 @@ while read sub; do
   for i in "${sub_ip[@]}"; do
     ptr_record=$(dig -x $i +short)
     if [ ! -z "$ptr_record" ]; then
-      echo $ptr_record >> $domain/resource.txt
+      echo $ptr_record >> results/$domain/resource.txt
     fi
   done
   
   txt_record=$(dig $sub TXT +short)
   if [ ! -z "$txt_record" ]; then
-    echo $txt_record >> $domain/resource.txt
+    echo $txt_record >> results/$domain/resource.txt
   fi
-done < $domain/all_subs.txt
+done < results/$domain/all_subs.txt
 #=======================================================================
 
 # Name resolution of subdomains and remove CDN IP's
 #=======================================================================
 echo "Performing name resolution and filtering CDN IP's..."
-cat $domain/all_subs.txt | dnsx -silent -resp-only | tee $domain/res_subs.txt
-cat $domain/res_subs.txt | mapcidr -filter-ip cdns.txt | tee $domain/ips.txt
+cat results/$domain/all_subs.txt | dnsx -silent -resp-only | tee results/$domain/res_subs.txt
+cat results/$domain/res_subs.txt | mapcidr -filter-ip cdns.txt | tee results/$domain/ips.txt
 #=======================================================================
 
 # Scanning port on No CDN IPs
 #=======================================================================
 echo "Scanning IPs for opening ports..."
 
-cat $domain/ips.txt | naabu -silent | tee $domain/portscan.txt
+cat results/$domain/ips.txt | naabu -silent | tee results/$domain/portscan.txt
 #=======================================================================
 
 # Certificate search again
@@ -156,8 +157,8 @@ while read ip_port; do
     san_urlss=$(echo "$san2" | grep -o "DNS:[^,]*" | sed 's/DNS://g' | xargs -n1 | sed 's/^\s*//' | sed 's/\s*$//')
     for i in "${san_urlss[@]}"; do
       if [ "$i" != "$domain" ]; then
-        echo $san_urlss | tee -a $domain/resource.txt
+        echo $san_urlss | tee -a results/$domain/resource.txt
       fi
     done
   fi
-done < $domain/portscan.txt
+done < results/$domain/portscan.txt
