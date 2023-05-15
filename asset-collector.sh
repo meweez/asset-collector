@@ -1,6 +1,19 @@
 #!/bin/bash
 
-export GITHUB_TOKEN=<Your github token>
+printf "
+##############################################################################
+#      __ _ ___ ___  ___| |_       ___ ___ | | | ___  ___| |_ ___  _ __      #
+#     / _\` / __/ __|/ _ \ __|____ / __/ _ \| | |/ _ \/ __| __/ _ \| '__|    #
+#    | (_| \__ \__ \  __/ ||_____| (_| (_) | | |  __/ (__| || (_) | |        # 
+#     \__,_|___/___/\___|\__|     \___\___/|_|_|\___|\___|\__\___/|_|        # 
+#                                                                            #
+#                 A powerful tool for collecting assets                      #
+#			                    Developed by MHA4065	     			                   # 
+#                            Version: 1.0.0               		               #
+##############################################################################
+"                                          
+
+export GITHUB_TOKEN="Your github token"
 # Check for requirements
 #=======================================================================
 if ! type "go" > /dev/null; then
@@ -18,12 +31,12 @@ if ! type "jq" > /dev/null; then
   exit
 fi
 
-if command -v "mapcidr" > /dev/null; then
+if ! command -v "mapcidr" > /dev/null; then
   echo "mapcidr is not installed ! Please install it and try again."
   exit
 fi
 
-if command -v "dnsx" > /dev/null; then
+if ! command -v "dnsx" > /dev/null; then
   echo "dnsx is not installed ! Please install it and try again."
   exit
 fi
