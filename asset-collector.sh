@@ -158,20 +158,8 @@ echo -e "${blue}[!]${NC} Subdomain enumeration complete! Results saved to result
 
 #Get PTR and TXT records of subdomains
 #=======================================================================
-while read sub; do
-  sub_ip=$(dig +short $sub)
-  for i in "${sub_ip[@]}"; do
-    ptr_record=$(dig -x $i +short)
-    if [ ! -z "$ptr_record" ]; then
-      echo $ptr_record >> results/$domain/resource.txt
-    fi
-  done
-  
-  txt_record=$(dig $sub TXT +short)
-  if [ ! -z "$txt_record" ]; then
-    echo $txt_record >> results/$domain/resource.txt
-  fi
-done < results/$domain/all_subs.txt
+cat results/$domain/all_subs.txt | dnsx -resp-only -silent | dnsx -silent -ptr >> results/$domain/resource.txt
+cat results/$domain/all_subs.txt | dnsx -txt -silent >> results/$domain/resource.txt
 #=======================================================================
 
 # Name resolution of subdomains and remove CDN IP's
