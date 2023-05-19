@@ -132,7 +132,17 @@ assetfinder --subs-only $domain > results/$domain/assetfinder.txt
 #crt.sh on Domain
 #=======================================================================
 echo -e "  ${green}[+]${NC} crt.sh"
-curl -s "https://crt.sh/?q=$domain&output=json" | tr '\0' '\n' | jq -r ".[].common_name,.[].name_value" | sort -u | uniq | tee -a results/$domain/crtsh.txt
+query=$(cat <<-END
+        SELECT
+            ci.NAME_VALUE
+        FROM
+            certificate_and_identities ci
+        WHERE
+            plainto_tsquery('certwatch', '$domain') @@ identities(ci.CERTIFICATE)
+END
+)
+echo "$query" | psql -t -h crt.sh -p 5432 -U guest certwatch | sed 's/ //g' | egrep ".*.\.$domain" | sed 's/*\.//g' | tr '[:upper:]' '[:lower:]' | sort -u | uniq | tee -a results/$domain/crtsh.txt
+# curl -s "https://crt.sh/?q=$domain&output=json" | tr '\0' '\n' | jq -r ".[].common_name,.[].name_value" | sort -u | uniq | tee -a results/$domain/crtsh.txt
 #=======================================================================
 
 #Subdomain enumeration in Github
