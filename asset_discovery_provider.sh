@@ -116,7 +116,7 @@ echo "$query" | psql -t -h crt.sh -p 5432 -U guest certwatch | sed 's/ //g' | eg
 #Subdomain enumeration in Github
 #=======================================================================
 if [[ ! -z "$GITHUB_TOKEN" ]]
-then
+then  
   echo -e "  ${green}[+]${NC} Github"
   github-subdomains -d $domain -e -o results/$domain/github.txt -t $GITHUB_TOKEN &> /dev/null
 fi
