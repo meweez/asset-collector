@@ -154,7 +154,7 @@ github-subdomains -d $domain -e -o results/$domain/github.txt -t $GITHUB_TOKEN
 #Subdomain enumeration using AbuseDB
 #=======================================================================
 echo -e "  ${green}[+]${NC} AbuseDB"
-curl -s "https://www.abuseipdb.com/whois/$domain" -H "user-agent: Chrome" | grep -E '<li>\w.*</li>' | sed -E 's/<\/?li>//g' | sed -e 's/$/."$domain"/' | tee -a results/$domain/abusedb.txt
+curl -s "https://www.abuseipdb.com/whois/$domain" -H "user-agent: Chrome" | grep -E '<li>\w.*</li>' | sed -E 's/<\/?li>//g' | sed -e "s/$/.$domain/" | tee -a results/$domain/abusedb.txt
 #=======================================================================
 
 # Combine all results and remove duplicates
