@@ -127,7 +127,7 @@ fi
 #=======================================================================
 echo -e "  ${green}[+]${NC} SourceGraph"
 q=$(echo $domain| sed -e 's/\./\\\./g')
-src search -json '([a-z\-]+)?:?(\/\/)?([a-zA-Z0-9]+[.])+('${q}') count:5000 fork:yes archived:yes' | jq -r '.Results[] | .lineMatches[].preview, .file.path' | grep -oiE '([a-zA-Z0-9]+[.])+('${q}')' | awk '{ print tolower($0) }' | sort -u uniq | tee -a results/$domain/sourcegraph.txt
+src search -json '([a-z\-]+)?:?(\/\/)?([a-zA-Z0-9]+[.])+('${q}') count:5000 fork:yes archived:yes' | jq -r '.Results[] | .lineMatches[].preview, .file.path' | grep -oiE '([a-zA-Z0-9]+[.])+('${q}')' | awk '{ print tolower($0) }' | sort -u | tee -a results/$domain/sourcegraph.txt
 #=======================================================================
 
 #Subdomain enumeration using AbuseDB
